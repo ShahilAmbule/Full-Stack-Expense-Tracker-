@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .expense-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .expense-table th,
+        .expense-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .expense-table th {
+            background-color: #f8f9fa;
+        }
+
+        .chart-container {
+            width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav {
+            background-color: #333;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+
+        .nav .nav-links {
+        display: flex;
+        gap: 20px;
+
+        }
+
+        .nav .logout-btn {
+            margin-left: auto;
+            background-color: #dc3545;
+            padding: 8px 15px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .nav .logout-btn:hover {
+            background-color: #c82333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 100px auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="auth-container">
+        <h1 style="text-align: center; font-weight: bold; margin-bottom: 20px;">Expense Tracker</h1>
+        <h2 style="text-align: center; margin-bottom: 20px">Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button style= "margin-bottom: 20px;" type="submit" class="btn btn-primary" >Login</button>
+            <p>Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></p>
+        </form>
+    </div>
+
+    <!-- Signup Page -->
+    <div id="signupPage" class="auth-container" style="display: none;">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="signupName">Name</label>
+                <input type="text" id="signupName" required>
+            </div>
+            <div class="form-group">
+                <label for="signupEmail">Email</label>
+                <input type="email" id="signupEmail" required>
+            </div>
+            <div class="form-group">
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign Up</button>
+            <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+        </form>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" style="display: none;">
+        <nav class="nav">
+            <div class="nav-links">
+                <a href="#" onclick="showExpenses()">Expenses</a>
+                <a href="#" onclick="showChart()">Analytics</a>
+            </div>
+            <a href="#" class="logout-btn" onclick="logout()">Logout</a>
+        </nav>
+
+        <div class="container">
+            <!-- Expenses Table -->
+            <div id="expensesPage">
+                <h2>Expenses</h2>
+                <button class="btn btn-primary" onclick="showAddExpenseModal()">Add Expense</button>
+                <table class="expense-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Comments</th>
+                            <th>Created At</th>
+                            <th>Updated At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesList">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Chart Page -->
+            <div id="chartPage" style="display: none;">
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Expense Modal -->
+        <div id="expenseModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle">Add Expense</h2>
+                <form id="expenseForm">
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" required>
+                            <option value="Food">Food</option>
+                            <option value="Transportation">Transportation</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="comments">Comments</label>
+                        <textarea id="comments"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let expenses = [];
+        let chart = null;
+
+        // Authentication Functions
+        function showSignup() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('signupPage').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('signupPage').style.display = 'none';
+        }
+
+        function login(email, password) {
+            // Implement API call to backend
+            // For demo, using local storage
+            const hardcodedEmail = "test@gmail.com";
+            const hardcodedPassword = "password123";
+            if (email === hardcodedEmail && password === hardcodedPassword) {
+                currentUser = { email };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMainApp();
+            } else {
+                alert("Invalid email or password. Please try again.");
+            }
+        }
+
+        function signup(name, email, password) {
+            // Implement API call to backend
+            login(email, password);
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('mainApp').style.display = 'none';
+            showLogin();
+        }
+
+        // Expense Management Functions
+        function showMainApp() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('signupPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            loadExpenses();
+        }
+
+        function loadExpenses() {
+            // Implement API call to backend
+            // For demo, using local storage
+            expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            renderExpenses();
+            updateChart();
+        }
+
+        function renderExpenses() {
+            const tbody = document.getElementById('expensesList');
+            tbody.innerHTML = '';
+            
+            expenses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .forEach(expense => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${expense.category}</td>
+                        <td>$${expense.amount}</td>
+                        <td>${expense.comments || '-'}</td>
+                        <td>${new Date(expense.createdAt).toLocaleDateString()}</td>
+                        <td>${new Date(expense.updatedAt).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="editExpense(${expense.id})">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteExpense(${expense.id})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+        }
+
+        function showAddExpenseModal() {
+            document.getElementById('modalTitle').textContent = 'Add Expense';
+            document.getElementById('expenseForm').reset();
+            document.getElementById('expenseModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('expenseModal').style.display = 'none';
+        }
+
+        function addExpense(category, amount, comments) {
+            const expense = {
+                id: Date.now(),
+                category,
+                amount: parseFloat(amount),
+                comments,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+            expenses.push(expense);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            loadExpenses();
+        }
+
+        function editExpense(id) {
+            const expense = expenses.find(e => e.id === id);
+            if (expense) {
+                document.getElementById('modalTitle').textContent = 'Edit Expense';
+                document.getElementById('category').value = expense.category;
+                document.getElementById('amount').value = expense.amount;
+                document.getElementById('comments').value = expense.comments || '';
+                document.getElementById('expenseModal').style.display = 'block';
+                
+                // Update form submission handler
+                const form = document.getElementById('expenseForm');
+                form.onsubmit = (e) => {
+                    e.preventDefault();
+                    expense.category = document.getElementById('category').value;
+                    expense.amount = parseFloat(document.getElementById('amount').value);
+                    expense.comments = document.getElementById('comments').value;
+                    expense.updatedAt = new Date();
+                    localStorage.setItem('expenses', JSON.stringify(expenses));
+                    loadExpenses();
+                    closeModal();
+                };
+            }
+        }
+
+        function deleteExpense(id) {
+            if (confirm('Are you sure you want to delete this expense?')) {
+                expenses = expenses.filter(e => e.id !== id);
+                localStorage.setItem('expenses', JSON.stringify(expenses));
+                loadExpenses();
+            }
+        }
+
+        // Chart Functions
+        function showExpenses() {
+            document.getElementById('expensesPage').style.display = 'block';
+            document.getElementById('chartPage').style.display = 'none';
+        }
+
+        function showChart() {
+            document.getElementById('expensesPage').style.display = 'none';
+            document.getElementById('chartPage').style.display = 'block';
+            updateChart();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            // Calculate category totals
+            const categoryTotals = expenses.reduce((acc, expense) => {
+                acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+                return acc;
+            }, {});
+
+            // Destroy existing chart if it exists
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Create new chart
+            chart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(categoryTotals),
+                    datasets: [{
+                        data: Object.values(categoryTotals),
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Expense Distribution by Category'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event Listeners
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            login(email, password);
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            signup(name, email, password);
+        });
+
+        document.getElementById('expenseForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const category = document.getElementById('category').value;
+            const amount = document.getElementById('amount').value;
+            const comments = document.getElementById('comments').value;
+            addExpense(category, amount, comments);
+            closeModal();
+        });
+
+        // Check if user is already logged in
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            showMainApp();
+        }
+    </script>
+</body>
+</html>
